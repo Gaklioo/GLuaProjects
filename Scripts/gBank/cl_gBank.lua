@@ -59,7 +59,7 @@ hook.Add("OnPlayerChat", "gBankTransfer", function(player, text, teamChat, isDea
             net.Start("gBankGetPlayerBalance")
             net.WriteString(localPlayerSteamID)
             net.SendToServer()
-
+            --Something about this is causing multiple requests to the server, Will figure out soon.
             net.Receive("gBankRecievePlayerBalance", function (len, ply)
                     local playerBalance = net.ReadUInt(32)
 
