@@ -34,10 +34,6 @@ hook.Add("HUDPaint", "gHudPaint", function()
     
 end)
 
-net.Receive("gBankRecievePlayerBalance", function (len, ply)
-    playerBalance = net.ReadUInt(32)
-end)
-
 surface.CreateFont("gHudFont", {
     font = "Arial",
     size = 35
