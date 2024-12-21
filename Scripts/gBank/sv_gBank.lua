@@ -10,10 +10,10 @@ util.AddNetworkString("gBankUpdate")
 
 if not sql.TableExists(TABLENAME) then
     sql.Begin()
-        sql.Query("DROP TABLE IF EXISTS " .. TABLENAME)
-        sql.Query("CREATE TABLE IF NOT EXISTS `" .. TABLENAME .. "` ( id int PRIMARY KEY, balance varchar )")
+        sql.Query("CREATE TABLE IF NOT EXISTS `" .. TABLENAME .. "` ( id int PRIMARY KEY, balance int )")
     sql.Commit()
 end
+
 
 -- Dont check balances, we've already made sure they have enough.
 function transferBetweenPlayers(fromSteamID, toSteamID, ammount)
@@ -63,6 +63,7 @@ end
 
 function updatePlayerBalance(steamID, changeValue)
     -- Fetch current balance
+
     local balanceResult = sql.Query("SELECT balance FROM `" .. TABLENAME .. "` WHERE id = '" .. steamID .. "'")
     print(balanceResult[1].balance)
     
@@ -71,10 +72,10 @@ function updatePlayerBalance(steamID, changeValue)
         return nil
     end
 
-    changeValue = balanceResult[1].balance + changeValue
-    
+    local updateValue = balanceResult[1].balance + changeValue
+
     -- Update balance
-    local queryString = "UPDATE `" .. TABLENAME .. "` set balance = " .. tonumber(changeValue) .. " where id = '" .. steamID .. "'"
+    local queryString = "UPDATE `" .. TABLENAME .. "` set balance = " .. tonumber(updateValue) .. " where id = '" .. steamID .. "'"
     local success = sql.Query(queryString)
     
     local testBalanceUpdate = sql.Query("SELECT balance FROM `" .. TABLENAME .. "` WHERE id = '" .. steamID .. "'")
@@ -84,6 +85,9 @@ function updatePlayerBalance(steamID, changeValue)
         print("Failed to update player balance")
         return nil
     end
+
+    local ply = player.GetBySteamID(steamID)
+    ply:SetNWInt("playerBalance", ply:GetNWInt("playerBalance") + changeValue)
 
     return 1
 end
@@ -102,7 +106,6 @@ end
 
 net.Receive("gBankGetPlayerBalance", function (len, ply)
     local steamID = net.ReadString(64)
-
     local balance = getPlayerBalance(steamID)
 
     net.Start("gBankRecievePlayerBalance")
@@ -126,22 +129,6 @@ net.Receive("gBankAddMoney", function (len, ply)
     updatePlayerBalance(addSteamID, ammountToAdd)
 end)
 
-net.Receive("gBankGetPlayerList", function (len, ply)
-    local players = player.GetAll()
-    local playerTable = {}
-
-
-    for k, v in ipairs(players) do -- 2d Array, playerTable[i][0] = Player Name, playerTable[i][1] = player steam id, this helps with /transfer greatly.
-        playerTable[k] = {}
-        playerTable[k][0] = v:GetName()
-        playerTable[k][1] = v:SteamID()
-    end
-
-    net.Start("gBankPlayerList")
-    net.WriteTable(playerTable)
-    net.Send(ply)
-end)
-
 --This is technically unsafe, but we're still learning
 net.Receive("gBankUpdate", function()
     print("Called")
@@ -155,13 +142,8 @@ net.Receive("gBankUpdate", function()
     print(getPlayerBalance(steamID))
 end)
 
-hook.Add("gBankJoin", "gBankOnJoin", function(steamID)
-    return loadPlayerData(steamID)
-end)
-
--- Kind of redundent, remove the custom hook for joining when already have on connect.
-gameevent.Listen("player_connect")
-hook.Add("player_connect", "getValueForClient", function(data)
-    local steamID = data.networkid
+hook.Add("PlayerInitialSpawn", "gBankLoadClient", function(ply)
+    local steamID = ply:SteamID()
     print(loadPlayerData(steamID))
+    ply:SetNWInt("playerBalance", loadPlayerData(steamID))
 end)

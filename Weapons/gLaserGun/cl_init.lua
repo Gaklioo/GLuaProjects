@@ -7,6 +7,7 @@ net.Receive("gLaserSendCharge", function()
     charge = net.ReadInt(32)
 end)
 
+local material = Material("cable/blue_electric")
 
 hook.Add("HUDPaint", "drawCharge", function()
     local player = LocalPlayer()
@@ -20,14 +21,13 @@ hook.Add("HUDPaint", "drawCharge", function()
         yPos = scrh / 1.25
         xPos = scrw / 1.25
         draw.SimpleText("Charge % ", "gHudFont", xPos + 350, yPos)
-        draw.SimpleText(charge, "gHudFont", xPos + 390, yPos + 30)
+        draw.SimpleText(player:GetActiveWeapon():GetlaserWeaponCharge(), "gHudFont", xPos + 390, yPos + 30)
     end
 end)
 
 hook.Add("PostDrawTranslucentRenderables", "DrawLaserBeam", function()
     if not startPos or not endPos then return end
 
-    local material = Material("cable/blue_electric")
     render.SetMaterial(material)
     render.DrawBeam(startPos, endPos, 2, 0, 0, Color(255, 255, 0))
 end)

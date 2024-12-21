@@ -1,16 +1,6 @@
 local scoreboard
 local playerBalance = 0
 
-local function getPlayerMoney(steamID)
-    net.Start("gBankGetPlayerBalance")
-    net.WriteString(steamID)
-    net.SendToServer()
-end
-
-net.Receive("gBankRecievePlayerBalance", function (len, ply)
-    playerBalance = net.ReadUInt(32)
-end)
-
 surface.CreateFont("gScoreboard", {
     font = "Arial",
     extended = false,
@@ -21,6 +11,7 @@ surface.CreateFont("gScoreboard", {
 local function ToggleScoreboard(toggle)
     if toggle then
         local scrw, scrh = ScrW(), ScrH()
+        local localPlayer = LocalPlayer()
 
         if not IsValid(scoreboard) then
             scoreboard = vgui.Create("DFrame")
@@ -42,11 +33,17 @@ local function ToggleScoreboard(toggle)
             end 
 
             local yPos = scoreboard:GetTall() * 0.1
-            for k, v in ipairs(player.GetAll()) do
-                local playerList = vgui.Create("DPanel", scoreboard)
+            local playerScrollPannel = vgui.Create("DScrollPanel", scoreboard)
+            playerScrollPannel:SetPos(0, yPos)
+            playerScrollPannel:SetSize(scoreboard:GetWide(), scoreboard:GetTall())
+            playerScrollPannel:Dock(NODOCK)
+            playerScrollPannel:DockMargin(0, 0, 0, 0)
 
-                playerList:SetPos(0, yPos)
+            for k, v in player.Iterator() do
+                local playerList = playerScrollPannel:Add("DPanel")
                 playerList:SetSize(scoreboard:GetWide(), scoreboard:GetTall() * .05)
+                playerList:Dock(TOP)
+                playerList:DockMargin(0, 0, 0, 0)
                 
                 playerList.Paint = function(self, w, h)
                     surface.SetDrawColor(0, 0, 0, 200)
@@ -54,12 +51,11 @@ local function ToggleScoreboard(toggle)
                     draw.SimpleText(v:Nick(), "gScoreboard", w * 0.1, h / 2, Color(255, 255, 255, 155), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
                     draw.SimpleText(v:Frags(), "gScoreboard", w * 0.4, h / 2, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
                     draw.SimpleText(v:Deaths(), "gScoreboard", w * 0.6, h / 2, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-                    getPlayerMoney(v:SteamID())
-                    draw.SimpleText(playerBalance, "gScoreboard", w * 0.8, h / 2, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+                    draw.SimpleText('$' .. localPlayer:GetNWInt("playerBalance"), "gScoreboard", w * 0.8, h / 2, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 
                 end
 
-                yPos = yPos + playerList:GetTall() * 1.1
+                playerScrollPannel:AddItem(playerList)
             end
         end
     else

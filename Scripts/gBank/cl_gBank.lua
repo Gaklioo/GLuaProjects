@@ -1,7 +1,8 @@
 local frameIsOpen = false
 
-hook.Add("OnPlayerChat", "gBankTransfer", function(player, text, teamChat, isDead)
-    if (player != LocalPlayer()  || isDead) then return end
+hook.Add("OnPlayerChat", "gBankTransfer", function(ply, text, teamChat, isDead)
+    local localPlayer = ply
+    if (localPlayer != LocalPlayer()  || isDead) then return end
 
     strText = string.lower(text)
     if(strText == "/transfer") then
@@ -9,9 +10,7 @@ hook.Add("OnPlayerChat", "gBankTransfer", function(player, text, teamChat, isDea
         if frameIsOpen then return end 
         frameIsOpen = true
 
-        local localPlayerSteamID = player:SteamID()
-        net.Start("gBankGetPlayerList")
-        net.SendToServer()
+        local localPlayerSteamID = ply:SteamID()
 
         local Frame = vgui.Create("DFrame")
         Frame:SetPos(5, 5)
@@ -32,14 +31,11 @@ hook.Add("OnPlayerChat", "gBankTransfer", function(player, text, teamChat, isDea
         playerList:SetPos(15, 75)
 
         playerList:Clear()
-        local pList
-        net.Receive("gBankPlayerList", function ()
-            pList = net.ReadTable()
-
-            for k, v in ipairs( pList ) do
-                playerList:AddChoice(pList[k][0], pList[k][1], false, false)
+        for _, plyL in player.Iterator() do
+            if IsValid(plyL) then
+                playerList:AddChoice(plyL:Name(), plyL:SteamID(), false, false)
             end
-        end)
+        end
 
         local textEntry = vgui.Create("DNumberWang", Frame)
         textEntry:SetPos(200, 75)
@@ -59,7 +55,7 @@ hook.Add("OnPlayerChat", "gBankTransfer", function(player, text, teamChat, isDea
             net.Start("gBankGetPlayerBalance")
             net.WriteString(localPlayerSteamID)
             net.SendToServer()
-            --Something about this is causing multiple requests to the server, Will figure out soon.
+
             net.Receive("gBankRecievePlayerBalance", function (len, ply)
                     local playerBalance = net.ReadUInt(32)
 

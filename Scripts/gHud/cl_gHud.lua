@@ -5,6 +5,7 @@ hook.Add("HUDPaint", "gHudPaint", function()
     local player = LocalPlayer()
     local health = player:Health()
     local armor = player:Armor()
+    local maxArmor = player:GetMaxArmor()
     local maxHealth = player:GetMaxHealth()
 
     surface.SetFont("gHudFont")
@@ -13,27 +14,23 @@ hook.Add("HUDPaint", "gHudPaint", function()
 
 
     local yPos = scrh / 1.25
+    local xPos = scrw * 0.9
     surface.SetDrawColor(0, 0, 128, 255)
     surface.SetTextPos(scrw * 0.9, scrh / 1.25)
-    draw.SimpleText("Health", "gHudFont", 0, yPos + 150)
-    draw.SimpleText("Armor", "gHudFont", 100, yPos + 150)
+    draw.SimpleText("Health", "gHudFont", 0, yPos + 20)
+    draw.SimpleText("Armor", "gHudFont", 0, yPos + 80)
 
     surface.SetDrawColor(255, 0, 0, 255)
-    surface.DrawRect(40, yPos, 15, 150 * (health / maxHealth))
+    surface.DrawRect(100, yPos + 30, 150 * (health / maxHealth), 15)
 
     surface.SetDrawColor(0, 0, 255, 255)
-    surface.DrawRect(135, yPos, 15, 150 * (health / maxHealth))
+    surface.DrawRect(100, yPos + 92, 150 * (armor / maxArmor), 15)
 
     surface.SetDrawColor(255, 255, 255, 255)
     draw.SimpleText(player:Name(), "gHudFont", scrw * 0.12, yPos + 20)
-    net.Start("gBankGetPlayerBalance")
-    net.WriteString(player:SteamID())
-    net.SendToServer()
 
     surface.SetTextPos(scrw * 0.105 , yPos + 100)
-    surface.DrawText('$' .. playerBalance, true)
-
-
+    surface.DrawText('$' .. player:GetNWInt("playerBalance"), true)
     
 end)
 
@@ -49,7 +46,8 @@ surface.CreateFont("gHudFont", {
 local hide = 
 {
     ["CHudHealth"] = true,
-    ["CHudBAttery"] = true 
+    ["CHudBattery"] = true,
+    ["CHudAmmo"] = true 
 }
 
 hook.Add("HUDShouldDraw", "HideHud", function(name)

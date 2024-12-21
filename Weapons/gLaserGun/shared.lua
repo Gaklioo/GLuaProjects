@@ -19,3 +19,8 @@ SWEP.Primary.Automatic = false
 SWEP.Secondary.ClipSize = -1
 SWEP.Secondary.DefaultClip = -1
 
+function SWEP:SetupDataTables()
+    self:NetworkVar("Int", 0, "laserWeaponCharge")
+end
+
+
